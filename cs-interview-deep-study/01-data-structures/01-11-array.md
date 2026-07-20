@@ -27,7 +27,7 @@
 |---|---|
 | component type | 배열 한 칸에 넣을 수 있다고 선언된 원소 타입이다. `String[]`의 component type은 `String`이다. |
 | 참조 배열 | 객체 자체가 아니라 객체를 가리키는 참조를 각 칸에 저장하는 배열이다. `String[]`, `Person[]`가 예다. |
-| 공변(covariant) | `String`을 `Object`로 볼 수 있으므로 Java가 `String[]`도 `Object[]` 변수로 가리키게 허용하는 타입 관계다. |
+| 공변(covariant) | 원소 타입의 부모·자식 관계가 배열에서도 같은 방향으로 따라가는 것이다. `String`을 `Object`로 볼 수 있으므로 `String[]`도 `Object[]`로 볼 수 있다. |
 | runtime | 컴파일이 끝난 뒤 프로그램이 실제로 실행되고 있는 동안이다. |
 | JVM | 컴파일된 Java 코드를 실제로 실행하는 Java Virtual Machine이다. 배열 저장 시 실제 component type 검사도 수행한다. |
 | primitive 배열 | 객체 참조가 아니라 `int`, `long` 같은 기본형 값을 직접 담는 배열이다. |
@@ -80,23 +80,64 @@ Java 배열은 생성 시 길이가 정해지는 객체이며 `length`는 이후
 Java 참조 배열은 공변(covariant)이다. `String[]`을 `Object[]` 변수로 참조할 수 있지만,
 실제 배열의 runtime component type은 `String`으로 유지된다.
 
+#### 공변을 아주 쉽게 말하면
+
+공변은 **원소 타입의 상속 관계가 배열에도 같은 방향으로 적용된다**는 뜻이다.
+
+```text
+String은 Object의 자식 타입이다.
+             ↓ 같은 방향으로 배열에도 적용
+String[]은 Object[]의 자식 타입이다.
+```
+
+따라서 `String[]`을 `Object[]` 변수로 가리킬 수 있다. 여기서 중요한 점은
+**변수의 이름표만 `Object[]`로 바뀌었을 뿐 실제 배열은 여전히 `String[]`**이라는
+것이다.
+
+상자로 비유하면 다음과 같다.
+
+```text
+실제 상자: String만 넣을 수 있는 String[] 상자
+붙인 이름표: 여러 객체를 가리킬 수 있다고 보이는 Object[]
+
+이름표를 바꿔도 실제 상자의 종류는 바뀌지 않는다.
+```
+
 이 문장을 단계별로 풀면 다음과 같다.
 
 ```text
-1. new String[1]로 만든 실제 배열은 "String만 넣는 배열"이다.
+1. new String[2]로 만든 실제 배열은 "String만 넣는 배열"이다.
 2. Java 문법은 그 배열을 Object[] 변수로 가리키는 것을 허용한다.
 3. 그러나 변수 이름표만 Object[]로 넓어졌을 뿐, 실제 배열은 String[] 그대로다.
 4. 따라서 Object[] 변수를 통해 Integer를 넣으려 해도 실행 중에 거부된다.
 ```
 
 ```java
-Object[] values = new String[1];
-values[0] = 10; // ArrayStoreException
+String[] strings = new String[2];
+Object[] objects = strings; // 공변이므로 참조 가능
+
+objects[0] = "hello"; // 성공: 실제 배열의 타입인 String
+objects[1] = 10;      // 컴파일은 되지만 실행 중 ArrayStoreException
 ```
 
-`values` 변수의 선언만 보면 `Object`를 넣을 수 있어 보여 컴파일은 된다. 하지만 실제
+`objects` 변수의 선언만 보면 `Object`를 넣을 수 있어 보여 컴파일은 된다. 하지만 실제
 배열 객체는 `String[]`이므로 JVM이 저장 직전에 검사하고 `ArrayStoreException`을
 발생시킨다. 즉, 공변은 “실제 배열의 종류가 Object 배열로 바뀐다”는 뜻이 아니다.
+
+한 문장으로 기억하면 다음과 같다.
+
+> `String → Object`가 가능하므로 `String[] → Object[]`도 허용하지만, 실제 배열은
+> 끝까지 `String[]`이어서 `String`이 아닌 값은 실행 중에 거부된다.
+
+Java 제네릭은 이와 다르다.
+
+```java
+List<String> strings = new ArrayList<>();
+List<Object> objects = strings; // 컴파일 오류
+```
+
+배열은 잘못된 저장을 실행 중에 검사하지만, 위와 같은 제네릭 대입은 컴파일 단계에서
+미리 차단한다.
 
 반면 primitive 배열은 참조 배열과 종류가 다르다. `int[]`는 `Object`이지만
 `Object[]`는 아니다. `Object[]`의 각 칸에는 객체 참조가 들어가야 하지만 `int[]`의
