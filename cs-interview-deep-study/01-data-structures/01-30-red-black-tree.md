@@ -8,6 +8,7 @@
 
 - 적용 템플릿: 공통 코어 + 자료구조 오버레이
 - 근거: [Oracle Java 17 TreeMap](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/TreeMap.html), [NIST DADS Red-Black Tree](https://xlinux.nist.gov/dads/HTML/redblack.html), [OpenJDK 17u TreeMap.java](https://github.com/openjdk/jdk17u/blob/master/src/java.base/share/classes/java/util/TreeMap.java)
+- HashMap tree bin 근거: [OpenJDK 17u HashMap.java](https://github.com/openjdk/jdk17u/blob/master/src/java.base/share/classes/java/util/HashMap.java)
 
 ---
 
@@ -41,7 +42,14 @@ Red-Black Tree는 노드에 색 정보를 두고 균형 조건을 유지하는 s
 
 ---
 
-## 2. 탄생 배경과 필요성
+## 2. 배우는 이유와 실제 쓰임
+
+| 질문 | 먼저 잡을 답 |
+|---|---|
+| 왜 배우나 | 색 규칙과 회전으로 height를 제한하면서 조회뿐 아니라 삽입·삭제도 O(log n)으로 유지하는 균형 복구 원리를 이해하기 위해 배운다. |
+| 판단 근거 | NIST는 Red-Black Tree의 색 불변식을 정의하고, Oracle Java 17 `TreeMap`은 red-black tree 구현이며 `get`·`put`·`remove`의 O(log n)을 보장한다. |
+| 실제로 어디에 쓰이나 | Java `TreeMap`처럼 정렬된 key를 유지하는 Map과, OpenJDK `HashMap`의 충돌이 많은 tree bin 구현을 이해할 때 쓰인다. |
+| 기억할 장면 | 색은 데이터가 아니라 “어디를 회전하고 다시 칠해야 균형이 복구되는가”를 알려 주는 표지다. |
 
 ### 왜 필요한가
 

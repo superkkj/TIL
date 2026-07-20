@@ -38,7 +38,14 @@ bucket은 해시 테이블 내부 배열에서 hash로 계산된 index가 가리
 
 ---
 
-## 2. 탄생 배경과 필요성
+## 2. 배우는 이유와 실제 쓰임
+
+| 질문 | 먼저 잡을 답 |
+|---|---|
+| 왜 배우나 | hash 값이 실제 저장 칸으로 어떻게 연결되는지 알아야 충돌, capacity, load factor, resize를 한 흐름으로 이해할 수 있다. |
+| 판단 근거 | NIST hash table 정의와 OpenJDK 17u `HashMap` 소스는 계산된 위치에 대응하는 table 칸과 그 칸의 entry 구조를 구분한다. |
+| 실제로 어디에 쓰이나 | `HashMap` 내부 동작을 읽거나 bucket 분포, 충돌 증가, 초기 capacity와 resize 문제를 진단할 때 쓰는 핵심 단위다. |
+| 기억할 장면 | bucket은 아파트의 “호수”이고, entry는 그 호수에 들어 있는 “거주자 정보”다. |
 
 ### 왜 필요한가
 

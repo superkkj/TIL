@@ -39,7 +39,14 @@ Binary Tree는 각 노드가 최대 두 개의 child를 가지는 트리다. 보
 
 ---
 
-## 2. 탄생 배경과 필요성
+## 2. 배우는 이유와 실제 쓰임
+
+| 질문 | 먼저 잡을 답 |
+|---|---|
+| 왜 배우나 | child가 최대 둘인 단순한 구조에서 재귀, 순회, height, subtree를 익히면 BST와 heap 같은 구조를 이해하기 쉬워진다. |
+| 판단 근거 | NIST는 binary tree를 각 node가 left와 right로 구분되는 최대 두 child를 갖는 rooted tree로 정의한다. |
+| 실제로 어디에 쓰이나 | binary search tree, binary heap, expression tree와 preorder·inorder·postorder 순회의 기본 골격으로 쓰인다. |
+| 기억할 장면 | 각 node에는 `left`와 `right`, 두 갈래 자리만 있다. |
 
 ### 왜 필요한가
 
