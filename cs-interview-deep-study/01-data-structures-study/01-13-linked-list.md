@@ -105,7 +105,24 @@ tail에서 prev를 따라간 수 == size
 
 #### 🛠️ 최소 단일 연결 리스트 구현
 
-**정의.** LIFO 방향(head 삽입/삭제)만 가진 최소 구현으로 구조를 몸에 익혀 보자. addFirst는 새 node가 기존 head를 next로 잡고 자신이 head가 되는 것, removeFirst는 head를 한 칸 뒤로 옮기는 것 — 그게 전부야. [출처: 01-13-linked-list.md §6 최소 단일 연결 리스트 구현]
+**한 문장으로 먼저.** `head`는 첫 번째 상자를 가리키는 화살표야. `addFirst`는 새 상자를 맨 앞에 붙이고, `removeFirst`는 그 화살표를 다음 상자로 옮겨. [출처: 01-13-linked-list.md §6 최소 단일 연결 리스트 구현]
+
+```text
+head
+  |
+  v
+[값 B | next] -> [값 A | next] -> null
+```
+
+| 코드 | 쉬운 뜻 |
+|---|---|
+| `E` | 넣을 값의 자료형 자리. `SinglyLinkedList<String>`이면 `E`는 `String`이야. |
+| `head` | 첫 Node를 가리키는 참조. 비어 있으면 `null`이야. |
+| `size` | 현재 Node 개수야. |
+| `value` | Node 상자 안에 넣은 실제 값이야. |
+| `next` | 다음 Node로 가는 화살표야. 마지막 Node에서는 `null`이야. |
+
+새 목록을 만들면 `head == null`, `size == 0`으로 시작해. Java 인스턴스 필드에서 참조형의 기본값은 `null`, `int`의 기본값은 `0`이고, 생성자를 적지 않은 클래스에는 기본 생성자가 선언돼. [출처: JLS 4.12.5, https://docs.oracle.com/javase/specs/jls/se17/html/jls-4.html#jls-4.12.5; JLS 8.8.9, https://docs.oracle.com/javase/specs/jls/se17/html/jls-8.html#jls-8.8.9; 01-13-linked-list.md §6]
 
 ```java
 import java.util.NoSuchElementException;
@@ -139,7 +156,43 @@ final class SinglyLinkedList<E> {
 }
 ```
 
-**주의.** 학습용 최소 구현으로 iterator, null 정책, 동시성, fail-fast는 생략했어. 실무 구현과 계약이 다르다는 걸 기억해 둬. [출처: 01-13-linked-list.md §6]
+**`Node`는 상자 설계도야.** 생성자의 `value`는 상자에 넣을 값이고 `next`는 다음 상자의 위치야. `new Node<>("B", a)`는 `"B"`를 담고 기존 Node `a`를 가리키는 새 Node를 만들어. `private`라 바깥 코드가 직접 다루지 않고, `static`이라 바깥 `SinglyLinkedList` 객체를 자동으로 보관하지 않아. `final`은 Node의 하위 클래스를 막는 말이지 `value`와 `next`를 변경 불가로 만드는 말은 아니야. [출처: JLS 8.1.1.2, https://docs.oracle.com/javase/specs/jls/se17/html/jls-8.html#jls-8.1.1.2; JLS 8.1.1.4, https://docs.oracle.com/javase/specs/jls/se17/html/jls-8.html#jls-8.1.1.4; 01-13-linked-list.md §6]
+
+**`addFirst` 한 줄을 세 줄로 풀어 볼게.** [출처: JLS 15.26.1, https://docs.oracle.com/javase/specs/jls/se17/html/jls-15.html#jls-15.26.1; 01-13-linked-list.md §6]
+
+```java
+Node<E> oldHead = head;                       // 1. 기존 첫 Node 기억
+Node<E> newHead = new Node<>(value, oldHead); // 2. 새 Node가 기존 첫 Node를 가리킴
+head = newHead;                               // 3. 새 Node를 첫 Node로 지정
+```
+
+원래 한 줄인 `head = new Node<>(value, head)`도 이 순서로 이해하면 돼. 오른쪽에서 기존 `head`를 읽어 새 Node를 완성한 다음, 그 새 Node를 왼쪽 `head`에 넣어. 마지막 `size++`는 Node 수를 1 늘려. [출처: JLS 15.26.1, https://docs.oracle.com/javase/specs/jls/se17/html/jls-15.html#jls-15.26.1; 01-13-linked-list.md §6]
+
+```text
+처음                    head -> null                 size = 0
+addFirst("A")           head -> A -> null            size = 1
+addFirst("B")           head -> B -> A -> null       size = 2
+```
+
+**`removeFirst`는 다섯 단계야.** [출처: 01-13-linked-list.md §6]
+
+1. `head == null`이면 꺼낼 Node가 없으므로 `NoSuchElementException`을 던져.
+2. `removed = head.value`로 첫 Node의 값을 먼저 보관해.
+3. `head = head.next`로 두 번째 Node를 새로운 첫 Node로 만들어.
+4. `size--`로 Node 수를 1 줄여.
+5. 보관한 `removed`를 반환해.
+
+`NoSuchElementException`은 요청한 원소가 존재하지 않음을 나타내는 예외야. [출처: Oracle Java 17 NoSuchElementException, https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/NoSuchElementException.html]
+
+```text
+removeFirst() 전         head -> B -> A -> null       size = 2
+removeFirst() 반환값     "B"
+removeFirst() 후         head -> A -> null            size = 1
+```
+
+방금 넣은 `B`가 먼저 나오지? 이게 마지막에 들어온 값이 먼저 나오는 LIFO야. NIST는 연결 리스트를 각 항목이 다음 항목으로 가는 link를 가진 구조로 정의하고, stack 구현에 사용된다고 설명해. [출처: NIST DADS Linked List, https://xlinux.nist.gov/dads/HTML/linkedList.html; 01-13-linked-list.md §6]
+
+**빠진 부분도 확인하자.** 이 코드는 head 삽입·삭제만 보여 주는 학습용 최소 구현이야. `size()`, `isEmpty()`, `peekFirst()`, `tail`, index 조회, 검색, iterator, 동기화는 구현하지 않았어. `addFirst`에 null 검사도 없어서 `null` 값 저장은 막지 않아. 빈 목록 판정은 값이 null인지가 아니라 `head == null`인지로 해. `size`는 private이고 조회 메서드가 없어서 현재 바깥 코드에서는 직접 읽지 못해. [출처: 01-13-linked-list.md §6 최소 단일 연결 리스트 구현]
 
 ***
 
@@ -170,7 +223,7 @@ class DoublyNode<E> {
 | 조용한 손상 | 삽입 중 기존 `next` 유실 | 뒤쪽 node들이 더는 도달되지 않음 |
 | 조용한 손상 | 이중 list의 한쪽 링크만 수정 | 순방향·역방향 결과 불일치 |
 | 무한 동작 | 실수로 cycle 생성 | null을 기다리는 순회가 끝나지 않음 |
-| 성능 오해 | index 삽입을 O(1)이라 단정 | 위치 탐색 때문에 실제 O(n) |
+| 성능 오해 | index 삽입을 O(1)이라 단정 | 위치 탐색이 있어 실제 O(n) |
 
 cycle 탐지는 Floyd의 느린/빠른 포인터 방식으로 추가 공간 O(1)에 확인할 수 있어. [출처: 01-13-linked-list.md §8]
 
@@ -206,6 +259,55 @@ Array와의 비교 표도 챙기자. [출처: 01-13-linked-list.md §10 Array와
 
 선택 기준은 이래 — LinkedList는 node 객체와 두 참조의 메모리 비용, 낮은 cache locality가 있어. ArrayList는 중간 이동 비용이 있지만 순차 접근과 index 조회에 유리해. 따라서 "삽입·삭제가 있다"는 이유만으로 LinkedList를 기본 선택하지 않아. 실무에서는 개념 이름보다 사용하는 구현체의 API 계약, 입력 크기, 데이터 분포, 변경 빈도와 동시 접근 조건을 함께 확인해. [출처: 01-13-linked-list.md §10 배열과 선택, §12 실무 판단 기준]
 
+#### 🧠 `index/순차 접근과 cache locality가 좋다`는 말 풀기
+
+이 표현은 세 가지 말을 한 문장에 넣어서 어려워. 하나씩 분리해 볼게. [출처: 01-13-linked-list.md §10 `index/순차 접근과 cache locality가 좋고 위치 탐색 비용이 없다`를 풀어 쓴다]
+
+**1. index 접근은 원하는 칸 번호를 이미 아는 조회야.** `arrayList.get(3)`은 내부 배열의 3번 칸을 읽어. OpenJDK 17u 구현도 index 범위를 확인한 뒤 `elementData[index]`를 읽고, Oracle Java 17 문서는 `get`이 constant time이라고 명시해. [출처: Oracle Java 17 ArrayList, https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ArrayList.html; OpenJDK 17u ArrayList.java, https://github.com/openjdk/jdk17u/blob/master/src/java.base/share/classes/java/util/ArrayList.java; 01-13-linked-list.md §10]
+
+```text
+index              0       1       2       3
+ArrayList        [ A ]   [ B ]   [ C ]   [ D ]
+                                           ^
+get(3) ------------------------------------+
+```
+
+LinkedList의 `get(3)`은 가까운 끝에서 시작해 `next`나 `prev`를 따라가. [출처: Oracle Java 17 LinkedList, https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/LinkedList.html; OpenJDK 17u LinkedList.java `node`, https://github.com/openjdk/jdk17u/blob/master/src/java.base/share/classes/java/util/LinkedList.java; 01-13-linked-list.md §10]
+
+```text
+first -> A <-> B <-> C <-> D <- last
+         0     1     2     3
+         연결을 따라가서 3번 Node에 도착
+```
+
+“위치 탐색 비용이 없다”는 말은 실행 비용이 0이라는 뜻이 아니야. ArrayList에도 범위 검사와 배열 읽기가 있어. 정확한 뜻은 **LinkedList처럼 여러 Node를 따라가는 O(n) 탐색 없이 O(1)에 index 조회**한다는 뜻이야. [출처: Oracle Java 17 ArrayList; OpenJDK 17u ArrayList.java `get`; 01-13-linked-list.md §10]
+
+**2. 순차 접근은 처음부터 끝까지 하나씩 읽는 거야.** ArrayList는 배열의 다음 칸을 읽고, LinkedList는 현재 Node의 `next`를 따라가. 원소 n개를 한 번씩 읽으므로 둘 다 전체 O(n)이지만 내부 이동 경로가 달라. [출처: 01-13-linked-list.md §10]
+
+```java
+for (String value : list) {
+    System.out.println(value);
+}
+```
+
+LinkedList를 `for (int i = 0; i < size; i++) list.get(i)` 형태로 읽으면 각 `get(i)`가 Node를 다시 따라가서 전체 O(n²)까지 커져. LinkedList의 순차 읽기에는 iterator나 향상된 for문을 사용해. [출처: Oracle Java RandomAccess, https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/RandomAccess.html; OpenJDK 17u LinkedList.java `node`; 01-13-linked-list.md §10]
+
+**3. cache locality는 다음에 읽을 데이터가 현재 읽은 데이터 주변에 있는지를 보는 말이야.** Oracle의 locality 설명은 주소가 가까운 항목을 이어서 읽는 것을 spatial locality라고 설명하고, 배열 원소 접근을 예로 들어. OpenJDK 17u ArrayList는 참조들을 하나의 `Object[] elementData`에 저장하고, LinkedList는 값과 `next/prev`를 각각의 Node 객체에 저장해. [출처: Oracle Numerical Computation Guide `cache locality`, https://docs.oracle.com/cd/E19957-01/801-7639/801-7639.pdf; OpenJDK 17u ArrayList.java `elementData`; OpenJDK 17u LinkedList.java `Node`; 01-13-linked-list.md §10]
+
+```text
+ArrayList : elementData -> [A 참조][B 참조][C 참조][D 참조]
+LinkedList: first -> [A|next] -> [B|next] -> [C|next] -> [D|null]
+```
+
+“ArrayList의 cache locality가 좋다”는 말은 이 **배열 칸 순서 읽기**와 **Node 참조 따라가기**의 차이를 설명해. Java SE API가 물리 주소나 cache hit 비율을 보장하는 것은 아니야. JVM, GC, 하드웨어, 데이터 크기에 따른 실제 차이는 벤치마크로 확인해야 해. [출처: Oracle Java Tutorial List Implementations, https://docs.oracle.com/javase/tutorial/collections/implementations/list.html; 01-13-linked-list.md §10]
+
+**마지막 함정.** ArrayList도 값을 검색하는 `indexOf("D")`는 A부터 비교하므로 O(n)이야. O(1)은 찾을 **index를 이미 알고 `get(index)`를 호출할 때**의 이야기야. [출처: Oracle Java 17 ArrayList; 01-13-linked-list.md §10]
+
+```text
+get(3)       : 3번 위치를 이미 앎 -> O(1)
+indexOf("D"): D의 위치를 모름    -> A, B, C, D 비교 -> O(n)
+```
+
 ***
 
 ### 🎯 면접 실전 (Interview Arsenal)
@@ -222,7 +324,7 @@ Linked List는 node들이 참조로 연결된 구조입니다. 위치를 알면 
 |---|---|---|
 | 내부 | Java LinkedList는 왜 양끝에서 탐색하나? | prev/next가 있는 이중 연결 구조라 가까운 끝을 선택한다. |
 | 실패 | 한쪽 링크만 갱신하면? | 순방향·역방향 중 하나가 끊기거나 잘못된 node를 가리킨다. |
-| 선택 | 실무에서 ArrayList가 흔한 이유는? | index/순차 접근과 cache locality가 좋고 위치 탐색 비용이 없다. |
+| 선택 | 실무에서 ArrayList가 흔한 이유는? | index를 알면 Node 순회 없이 O(1)에 조회하고, 내부 배열을 순서대로 읽어. 실제 성능은 측정해. |
 
 > 😎 **Bailey**: 자, 꼬리질문 간다. "단일 연결 리스트에서 tail 참조를 갖고 있는데도 tail 삭제가 O(n)인 이유는?" — tail을 아는 것과 tail의 "이전 node"를 아는 건 다른 문제야. Q4에서 확인해. 흥, 이거 틀리면 이중 연결 리스트가 왜 존재하는지 모른다는 뜻이야. 😒
 
@@ -320,14 +422,18 @@ F6. cycle 탐지는 Floyd의 느린/빠른 포인터 방식으로 추가 공간 
 
 F7. 단일 연결 리스트에서 tail 참조가 있어도 tail 삭제는 이전 node를 찾기 위해 O(n)이다. 이중 연결 리스트는 tail.prev로 해결한다. [출처: 01-13-linked-list.md §14 Q4]
 
+F8. 학습용 최소 구현은 새 목록에서 `head == null`, `size == 0`으로 시작하고, `addFirst`는 새 Node가 기존 head를 가리킨 뒤 head를 교체하며, `removeFirst`는 빈 목록에서 `NoSuchElementException`을 던진다. [출처: JLS 4.12.5, https://docs.oracle.com/javase/specs/jls/se17/html/jls-4.html#jls-4.12.5; JLS 15.26.1, https://docs.oracle.com/javase/specs/jls/se17/html/jls-15.html#jls-15.26.1; Oracle Java 17 NoSuchElementException, https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/NoSuchElementException.html; 01-13-linked-list.md §6]
+
+F9. Java 17 `ArrayList.get(index)`는 constant time이고, OpenJDK 17u 구현은 범위 확인 뒤 내부 `elementData[index]`를 읽는다. Java 17 `LinkedList`의 index 연산은 가까운 끝에서 Node 연결을 순회한다. [출처: Oracle Java 17 ArrayList, https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/ArrayList.html; Oracle Java 17 LinkedList, https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/LinkedList.html; OpenJDK 17u ArrayList.java; OpenJDK 17u LinkedList.java; 01-13-linked-list.md §10]
+
 ## 모름 (U)
 
-U1. OpenJDK LinkedList의 내부 Node 필드 구성·실제 소스 코드 — 원본이 소스 링크를 연결하지 않았으므로 구현 세부로 단정하지 않는다.
+U1. 학습용 `SinglyLinkedList`의 동기화 방식 — 예제에 동시성 계약이나 동기화 코드가 없다.
 
-U2. cache locality 차이가 실제 벤치마크에서 만드는 수치적 성능 차이 — 원본은 "불리하다"는 방향성까지만 제시했다.
+U2. ArrayList와 LinkedList의 cache locality가 현재 JVM·GC·하드웨어에서 만드는 수치적 성능 차이 — Java SE API가 이 수치를 보장하지 않으며 실제 벤치마크가 없다.
 
 U3. fail-fast iterator의 구체 동작(ConcurrentModificationException 발생 조건 상세) — 원본 §6이 "생략했다"고 명시한 영역이다.
 
 U4. Floyd 포인터가 만나는 지점의 수학적 증명 — 원본에 증명이 없어 본문에서 다루지 않았다.
 
-[2026.07.22 (수) 12:48:52]
+[2026.07.23 (목) 00:05:41]
