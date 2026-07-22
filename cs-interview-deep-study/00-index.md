@@ -2,6 +2,8 @@
 
 > 템플릿 허브: [cs-concept-deep-dive-template.md](cs-concept-deep-dive-template.md)
 > 공통 코어: [_templates/00-core-concept-template.md](_templates/00-core-concept-template.md)
+> `$study` 학습본: [자료구조 1.1~1.43 Study Edition](01-data-structures-study/00-index.md)
+> 학습본 검증 기록: [자료구조 Study Edition 검증 결과](01-data-structures-study/VALIDATION.md)
 > 규칙: T1 = 풀 템플릿(타임박스 120분) / T2 = 축약판(0·2·4·8·10·16·17) / T3 = 한 줄 카드
 > 완료 기준: 문서 작성 ≠ 완료. **덮고 소리 내서 20초 답변**까지가 1회전 완료.
 

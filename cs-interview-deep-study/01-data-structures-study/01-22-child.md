@@ -1,0 +1,210 @@
+### [한 칸 아래의 관계] 자식 노드 (Child)
+
+> 🔑 핵심 키워드: `child` · `descendant` · `degree` · `left/right child` · `cycle` · `사전조건/사후조건` [출처: 01-22-child.md §1, §5]
+
+웨이드님~ 이번엔 child야! 😊 "아래에 있으면 다 자식이지"라고 넘어가기 쉬운데, child와 descendant의 경계, 그리고 left/right 자리가 갖는 의미까지 구분해야 면접에서 안 흔들려. 같이 정리해 보자! 🤓
+
+***
+
+### 🧭 핵심 원리 (Core Principles & Concepts)
+
+정석 정의부터. child는 **어떤 노드 바로 아래에 연결된 노드**야. parent에서 edge로 내려가 연결돼. [출처: 01-22-child.md §1, NIST DADS Child (원본 §0 재인용)]
+
+쉽게 말하면 폴더 안의 하위 폴더나 조직도에서 부서 아래 팀 같은 관계야. 비유는 이해용이고, 면접 답변은 정석 용어(edge, parent, descendant)로 돌아와서 해. [출처: 01-22-child.md §1]
+
+child가 왜 필요하냐면, 트리는 부모-자식 관계로 계층을 표현하므로 child가 있어야 아래 단계 구조가 만들어지기 때문이야. [출처: 01-22-child.md §2]
+
+이 문서의 범위는 child의 정의와 상위 자료구조에서의 역할까지야. 정렬·동시성·영속성·특정 시간 복잡도는 별도 불변식이나 구현 계약이 있을 때만 보장돼. [출처: 01-22-child.md §3]
+
+#### 📖 어려운 말 먼저 풀기 (원본 용어 표 보존)
+
+| 용어 | 쉬운 뜻 |
+|---|---|
+| child | 현재 Node에서 edge 하나를 아래로 따라가 바로 만나는 Node다. |
+| descendant(후손) | child뿐 아니라 child의 child처럼 아래에 있는 모든 Node다. |
+| degree | 한 Node가 직접 가진 child 수다. |
+| left/right child | 이진 트리에서 두 child 자리를 순서까지 구분해 부르는 말이다. |
+| cycle | 조상 Node를 다시 child로 연결해 같은 곳을 반복해서 돌게 되는 고리다. |
+
+[출처: 01-22-child.md §1 어려운 말 먼저 풀기]
+
+***
+
+### 🏗️ 구조와 연산 (Structure & Operations)
+
+#### 🎚️ child 관계의 정확한 범위
+
+기본 예시부터. 여기서 B와 C는 A의 child야. [출처: 01-22-child.md §4]
+
+```text
+A
+├─ B
+└─ C
+```
+
+child는 descendant 전체가 아니라 edge 하나로 직접 연결된 바로 아래 node야. grandchild는 descendant이지만 직접 child는 아니야. 그리고 binary tree에서는 왼쪽과 오른쪽 위치가 서로 다른 자리이므로 child가 하나일 때도 left인지 right인지 정보가 중요해. [출처: 01-22-child.md §4]
+
+#### 🔢 child의 순서가 의미 있는가?
+
+tree 종류에 따라 달라. 원본 구분 그대로 가져올게. [출처: 01-22-child.md §4]
+
+```text
+일반 unordered tree
+  child 집합만 중요할 수 있음
+
+ordered tree
+  첫째, 둘째 child의 위치가 의미 있음
+
+binary tree
+  left와 right는 서로 교환 가능한 이름이 아님
+```
+
+BST에서는 left/right 위치가 key 정렬 불변식과 연결되고, expression tree에서는 왼쪽과 오른쪽 피연산자를 바꾸면 뺄셈·나눗셈 결과가 달라질 수 있어. [출처: 01-22-child.md §4]
+
+> 😒 **Bailey**: 흥. "child가 하나뿐이면 left든 right든 무슨 상관?"이라고? expression tree에서 피연산자 자리 바꾸면 뺄셈 결과가 달라진다니까. 자리는 이름이 아니라 의미야. [출처: 01-22-child.md §4]
+
+#### 🧰 저장과 연결 연산
+
+일반 tree는 `List<Node> children`, binary tree는 `left/right` 필드로 표현할 수 있어. 새 child를 연결할 때는 cycle이 생기지 않는지, 기존 parent가 있는 node를 중복 연결하는지 확인해야 tree 불변식이 유지돼. [출처: 01-22-child.md §5]
+
+```java
+class BinaryNode<T> {
+    T value;
+    BinaryNode<T> left;
+    BinaryNode<T> right;
+}
+```
+
+child 연결 연산의 사전조건과 사후조건은 체크리스트로 외워 두자. ancestor를 child로 붙이면 순회가 다시 위로 돌아가 cycle이 돼. [출처: 01-22-child.md §5]
+
+```text
+사전조건
+  child가 null이 아닌가?
+  child가 자기 자신인가?
+  child가 현재 node의 ancestor인가?
+  tree가 parent 하나만 허용하면 기존 parent가 있는가?
+
+사후조건
+  parent.children에 child가 존재
+  parent 포인터를 저장한다면 child.parent == parent
+  cycle 없음
+```
+
+상태 추적은 위 연산 예시를 입력부터 결과까지 따라가며 값·index·Node 중 실제로 변하는 상태를 확인하는 방식으로 해. [출처: 01-22-child.md §6]
+
+***
+
+### 🧷 불변식과 경계 상황 (Invariants & Boundaries)
+
+불변식은 삽입·조회·삭제 전후에도 계속 참이어야 하는 규칙이야. 자료구조가 망가지지 않았다고 판단하는 필수 조건이고, 연산이 끝난 뒤에도 다시 맞아야 해. child 관련 구체 조건은 위 사전·사후조건을 기준으로 확인하고, 상위 자료구조의 불변식과 충돌하는 변경은 허용하지 않아. [출처: 01-22-child.md §7]
+
+경계값은 첫 index, 마지막 index, 0개처럼 조건이 바뀌는 가장자리 값이야. 실패는 예외가 발생해 바로 드러나는 경우와, 예외 없이 틀린 값이나 깨진 연결이 남는 경우로 나눠 봐야 해. [출처: 01-22-child.md §8]
+
+***
+
+### 📊 성능과 선택 기준 (Cost & Selection)
+
+child 자체가 독립 연산을 모두 정의하는 것은 아니야. 접근 비용은 배열·Node·Tree 등 실제 저장 표현과 상위 자료구조의 연산 계약을 기준으로 판단해. [출처: 01-22-child.md §9] 자료구조 선택도 이 개념만 떼어 하지 않고 필요한 조회·삽입·삭제·정렬·범위·순회 연산 기준으로 비교해. [출처: 01-22-child.md §10] 근거는 표준·공식 자료 기준, Java API는 Oracle Java 17 문서 명시 범위에서만 보장으로 말하고, 실무에서는 구현체 API 계약·입력 크기·데이터 분포·변경 빈도·동시 접근 조건을 함께 확인해. [출처: 01-22-child.md §11, §12]
+
+***
+
+### 🎯 면접 실전 (Interview Arsenal)
+
+원본 면접 답변 그대로. [출처: 01-22-child.md §13]
+
+```text
+child는 어떤 노드 바로 아래에 연결된 노드입니다. 트리의 계층 구조는 parent-child 관계로 만들어집니다.
+```
+
+> 😎 **Bailey**: 흥, 기본기 테스트. child랑 descendant 차이 한 문장으로 말해 봐. child는 edge 하나 아래, descendant는 여러 단계 아래까지 포함 — 이거 헷갈리면 아래 질문 지도부터 다시 봐. 😠 [출처: 01-22-child.md §14 질문 지도]
+
+꼬리질문 지도야. [출처: 01-22-child.md §14]
+
+| 축 | 질문 | 답변 핵심 |
+|---|---|---|
+| 내부 | child와 descendant 차이는? | child는 edge 하나 아래, descendant는 여러 단계 아래까지 포함한다. |
+| 실패 | 조상을 child로 연결하면? | cycle이 생겨 tree 불변식이 깨진다. |
+| 비교 | binary tree의 child 하나는 위치가 중요한가? | left와 right가 구분되는 ordered 자리이므로 중요하다. |
+
+#### Q1. binary tree에서 child는 몇 개까지 가능한가?
+
+<details><summary>답 보기</summary>
+
+binary tree에서는 각 노드가 최대 두 개의 child를 가진다. 보통 left child와 right child로 부른다. [출처: 01-22-child.md §14 Q1]
+
+</details>
+
+#### Q2. child가 없는 것과 child 필드가 null인 것은 항상 같은가?
+
+<details><summary>답 보기</summary>
+
+포인터 기반 binary tree에서는 보통 같다. 배열 기반 heap에서는 child 객체 필드가 없고 index 계산 결과가 size 범위 밖인지로 child 부재를 판단한다. 논리 관계와 물리 표현을 구분해야 한다. [출처: 01-22-child.md §14 Q2]
+
+</details>
+
+#### Q3. child 수를 degree라고 부를 수 있는가?
+
+<details><summary>답 보기</summary>
+
+rooted tree 문맥에서 node의 child 수를 degree로 설명하는 자료가 있다. graph의 degree는 incident edge 수라 parent edge까지 포함할 수 있으므로 문맥을 구분한다. [출처: 01-22-child.md §14 Q3]
+
+</details>
+
+#### Q4. binary tree에서 child가 하나면 반드시 left인가?
+
+<details><summary>답 보기</summary>
+
+아니다. 일반 binary tree에서는 left 하나만 또는 right 하나만 있을 수 있다. 완전 이진 트리처럼 모양 불변식이 추가되면 가능한 위치가 제한된다. [출처: 01-22-child.md §14 Q4]
+
+</details>
+
+#### Q5. 한 node가 두 parent의 child가 될 수 있는가?
+
+<details><summary>답 보기</summary>
+
+일반 rooted tree에서는 root를 제외한 node의 parent가 하나여야 한다. 두 parent를 허용하면 tree보다 DAG 같은 graph 모델에 가깝다. [출처: 01-22-child.md §14 Q5]
+
+</details>
+
+관련 문서: [Parent](01-23-parent.md), [Binary Tree](01-27-binary-tree.md) [출처: 01-22-child.md §14]
+
+***
+
+### 📌 요약 (Summary)
+
+- child는 edge 하나로 직접 연결된 바로 아래 node이고, descendant는 여러 단계 아래까지 포함한다. [출처: 01-22-child.md §4]
+- binary tree의 left/right는 교환 가능한 이름이 아니라 의미가 다른 자리다. BST 정렬 불변식·expression tree 연산 결과와 연결된다. [출처: 01-22-child.md §4]
+- child 연결 전 사전조건(null/자기 자신/ancestor/기존 parent)과 사후조건(포함·양방향 일치·cycle 없음)을 확인해야 tree 불변식이 유지된다. [출처: 01-22-child.md §5]
+- child 부재 판정은 표현마다 다르다. 포인터 tree는 null, 배열 heap은 index 범위로 판단한다. [출처: 01-22-child.md §14 Q2]
+
+문서를 덮고 스스로 점검하자. 원본 §15 체크리스트 그대로야. [출처: 01-22-child.md §15]
+
+```text
+Child: 자식 노드을 한 문장으로 정의할 수 있는가?
+왜 필요한지 이전 방식의 한계와 연결할 수 있는가?
+내부 구조와 핵심 연산을 손으로 추적할 수 있는가?
+연산 전후에도 반드시 지켜져야 하는 규칙인 불변식과, 그 규칙이 깨지는 실패 상황을 설명할 수 있는가?
+보통 입력의 평균 비용, 가장 나쁜 입력의 최악 비용, 가끔 발생하는 큰 비용을 여러 연산에 나누는 상환 비용 중 무엇인지 전제를 붙여 말할 수 있는가?
+대안 자료구조와 선택 기준을 비교할 수 있는가?
+```
+
+***
+
+📍 다음 학습: [01-23-parent.md](01-23-parent.md) | 목차: [00-index.md](00-index.md)
+
+---
+## 사실 (F)
+
+F1. child는 어떤 노드 바로 아래에 edge로 연결된 노드다. [출처: NIST DADS Child (원본 01-22-child.md §0·§1 재인용)]
+F2. child와 descendant는 다르다. grandchild는 descendant이지만 직접 child가 아니다. [출처: 01-22-child.md §4]
+F3. binary tree에서 left/right는 구분되는 자리이며, BST의 key 정렬 불변식·expression tree의 피연산자 순서와 연결된다. [출처: 01-22-child.md §4]
+F4. ancestor를 child로 연결하면 cycle이 생겨 tree 불변식이 깨진다. [출처: 01-22-child.md §5, §14]
+F5. binary tree의 node는 child를 최대 두 개 가진다. [출처: 01-22-child.md §14 Q1]
+F6. rooted tree에서 root를 제외한 node의 parent는 하나여야 하며, 두 parent 허용은 DAG 모델에 가깝다. [출처: 01-22-child.md §14 Q5]
+
+## 모름 (U)
+
+U1. unordered tree에서 child 집합의 순서를 실제 구현이 어떻게 저장하는지는 원본에 근거가 없어 다루지 않았다.
+U2. degree 용어의 표준 정의 범위(자료마다 다른 정의)는 원본이 "문맥을 구분한다"고만 밝혀, 단일 정의를 확정하지 않았다. [출처: 01-22-child.md §14 Q3]
+
+[2026.07.22 (수) 12:49:04]
