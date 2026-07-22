@@ -286,6 +286,40 @@ addFirst("A")           head -> A -> null            size = 1
 addFirst("B")           head -> B -> A -> null       size = 2
 ```
 
+위 세 상태를 실제 호출 코드로 쓰면 이거야. [출처: 01-13-linked-list.md §6 최소 단일 연결 리스트 구현]
+
+```java
+SinglyLinkedList<String> list = new SinglyLinkedList<>(); // head == null, size == 0
+list.addFirst("A");                                       // head -> A -> null, size == 1
+list.addFirst("B");                                       // head -> B -> A -> null, size == 2
+```
+
+`addFirst` 안에서 일어나는 변화만 한 줄씩 펼치면 이렇게 읽어. 아래 코드는 설명을 위해
+`head`와 `size`만 꺼내 적은 형태야. [출처: JLS 15.26.1, https://docs.oracle.com/javase/specs/jls/se17/html/jls-15.html#jls-15.26.1; 01-13-linked-list.md §6]
+
+```java
+// 처음
+Node<String> head = null;
+int size = 0;
+
+// addFirst("A")와 같은 변화
+head = new Node<>("A", head); // 기존 head가 null: A.next == null
+size++;                        // size == 1
+
+// addFirst("B")와 같은 변화
+head = new Node<>("B", head); // 기존 head가 A: B.next가 A를 가리킴
+size++;                        // size == 2
+```
+
+여기서 A를 두 번 만들거나 복사하지 않아. 첫 번째 `new`가 A Node 하나를 만들고, 두 번째
+`new`가 B Node 하나를 만들어. B의 `next`에는 이미 있던 A Node의 참조가 들어가.
+[출처: JLS 4.3.1, https://docs.oracle.com/javase/specs/jls/se17/html/jls-4.html#jls-4.3.1; JLS 15.9.4, https://docs.oracle.com/javase/specs/jls/se17/html/jls-15.html#jls-15.9.4; 01-13-linked-list.md §4, §6]
+
+```text
+첫 번째 new: [A] 객체 생성
+두 번째 new: [B] 객체 생성 ──next──> 이미 있던 [A] 객체
+```
+
 **`removeFirst`는 다섯 단계야.** [출처: 01-13-linked-list.md §6]
 
 1. `head == null`이면 꺼낼 Node가 없으므로 `NoSuchElementException`을 던져.
@@ -542,6 +576,8 @@ F10. `Node`는 Java 키워드가 아니라 이 코드가 선언한 클래스 이
 
 F11. `new Node(...)`를 평가할 때 새 Node 객체가 생기고 그 객체의 참조가 결과로 나오며, OpenJDK의 `LinkedList.Node`와 `HashMap.Node`는 이름은 같지만 필드 구성이 다르다. [출처: JLS 15.9.4, https://docs.oracle.com/javase/specs/jls/se17/html/jls-15.html#jls-15.9.4; OpenJDK 17u LinkedList.java; OpenJDK 17u HashMap.java; 01-13-linked-list.md §4]
 
+F12. `addFirst("A")`는 A Node를 만들고, 뒤이은 `addFirst("B")`는 새 B Node의 `next`가 기존 A Node를 가리키게 한다. 두 번째 호출에서 A Node를 다시 생성하거나 복사하지 않는다. [출처: JLS 4.3.1, https://docs.oracle.com/javase/specs/jls/se17/html/jls-4.html#jls-4.3.1; JLS 15.9.4, https://docs.oracle.com/javase/specs/jls/se17/html/jls-15.html#jls-15.9.4; 01-13-linked-list.md §6]
+
 ## 모름 (U)
 
 U1. 학습용 `SinglyLinkedList`의 동기화 방식 — 예제에 동시성 계약이나 동기화 코드가 없다.
@@ -556,4 +592,4 @@ U5. 각 Node 객체의 실제 물리 메모리 주소와 배치 — Java 언어 
 
 U6. 연결이 끊긴 Node의 저장 공간이 회수되는 정확한 시점 — Java 언어 명세가 특정 시점을 정하지 않는다.
 
-[2026.07.23 (목) 00:11:42]
+[2026.07.23 (목) 00:32:41]

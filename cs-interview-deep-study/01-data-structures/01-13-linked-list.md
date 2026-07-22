@@ -469,6 +469,38 @@ addFirst("B") 후
 head -> [B | next] -> [A | next] -> null, size = 2
 ```
 
+위 그림을 만드는 호출 코드는 다음 두 줄이다.
+
+```java
+SinglyLinkedList<String> list = new SinglyLinkedList<>(); // head == null, size == 0
+list.addFirst("A");                                       // head -> A -> null, size == 1
+list.addFirst("B");                                       // head -> B -> A -> null, size == 2
+```
+
+각 `addFirst` 내부에서 실행되는 코드를 `head`와 `size`만 남겨 펼치면 다음과 같다.
+
+```java
+// 처음
+Node<String> head = null;
+int size = 0;
+
+// addFirst("A")와 같은 변화
+head = new Node<>("A", head); // 기존 head는 null이므로 A.next == null
+size++;                        // size == 1
+
+// addFirst("B")와 같은 변화
+head = new Node<>("B", head); // 기존 head가 A이므로 B.next가 A를 가리킴
+size++;                        // size == 2
+```
+
+두 번째 호출에서 A Node를 다시 만들거나 복사하지 않는다. 새 B Node의 `next`에 기존
+A Node를 가리키던 `head` 참조를 저장한 뒤, `head`가 B Node를 가리키게 바뀐다.
+
+```text
+첫 번째 new: [A] 객체 생성
+두 번째 new: [B] 객체 생성 ──next──> 이미 있던 [A] 객체
+```
+
 #### `removeFirst`를 한 줄씩 보기
 
 ```java
